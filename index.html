@@ -145,6 +145,39 @@ tbody tr.sel{box-shadow:inset 0 0 0 2px var(--accent-2);background:var(--accent-
 .btn[disabled]{opacity:.42;cursor:default;box-shadow:none}
 .tabwrap{max-height:560px;overflow:auto}
 
+/* ---- scheda prodotto ---- */
+.form{display:grid;gap:14px}
+.f2{grid-template-columns:1fr 1fr}.f3{grid-template-columns:1fr 1fr 1fr}
+label.f>span{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:600}
+label.f>span b{color:var(--alert)}
+.form input,.form select,.form textarea{width:100%;font:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--line-strong);
+  border-radius:9px;background:var(--paper);color:var(--ink);height:35px;box-shadow:var(--sh-1)}
+.form textarea{height:auto;resize:vertical}
+.form input:focus,.form select:focus{outline:none;border-color:var(--accent-2);box-shadow:0 0 0 3px var(--accent-soft)}
+.form input.mono{font-family:'Roboto Mono',monospace}
+.imgbox{border:1px dashed var(--line-strong);border-radius:12px;background:var(--sunk);display:grid;place-items:center;
+  color:var(--faint);font-size:12px;height:132px;text-align:center;padding:10px;cursor:pointer}
+.imgbox:hover{border-color:var(--accent-2);color:var(--accent)}
+.misrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #EFF1F5}
+.misrow:last-child{border:0}
+.misrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--navy);flex:none;box-shadow:none}
+.misrow .lab{width:78px;font-size:12.5px;color:var(--muted)}
+.misrow input[type=text]{max-width:230px}
+.misrow.off{opacity:.45}
+.prova{background:var(--sunk);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:12px}
+.prova .rr{display:flex;justify-content:space-between;align-items:baseline;margin-top:5px}
+.prova b{font-family:'Roboto Mono',monospace;font-size:15px}
+.err{color:var(--alert)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);border:1px solid var(--accent-line);
+  color:var(--accent);border-radius:20px;padding:3px 11px;font-size:12px;font-weight:500}
+.libcol{display:grid;grid-template-columns:280px 1fr;min-height:420px}
+.liblist{border-right:1px solid var(--line);background:var(--sunk);padding:12px}
+.libitem{padding:9px 12px;border-radius:9px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px}
+.libitem:hover{background:var(--accent-soft)}
+.libitem.on{background:linear-gradient(160deg,#2A5480,var(--navy));color:#fff;font-weight:500}
+.libitem b{margin-left:auto;font-family:'Roboto Mono',monospace;font-weight:500;opacity:.7;font-size:11.5px}
+.sovr{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok-line);border-radius:6px;padding:1px 8px;font-size:11px}
+
 /* ---- schede richiudibili ---- */
 .coll{border:0;background:none;cursor:pointer;color:var(--faint);padding:3px;border-radius:6px;display:grid;place-items:center;line-height:0}
 .coll:hover{background:var(--sunk);color:var(--ink)}
@@ -261,7 +294,7 @@ const SEZIONI={
   commesse:{voci:[['elenco','Elenco commesse'],['apri','Apri'],['imp','Impostazioni commessa']]},
   preventivi:{voci:[['elenco','Elenco preventivi'],['apri','Apri']]},
   magazzino:{voci:[['giac','Giacenze'],['mov','Movimenti'],['carico','Carico da fornitore'],['inv','Rettifiche e inventario'],['sotto','Sottoscorta']]},
-  articoli:{voci:[['elenco','Elenco articoli'],['scheda','Scheda articolo'],['gruppi','Gruppi e sottogruppi'],['spec','Specifiche'],['acc','Accessori'],['listini','Listini e prezzi']]},
+  articoli:{voci:[['articoli','Articoli'],['accessori','Accessori'],['scheda','Scheda prodotto'],['spec','Specifiche'],['gruppi','Gruppi e sottogruppi'],['listini','Listini e prezzi']]},
   amministrazione:{voci:[['clienti','Clienti'],['forn','Fornitori'],['agenti','Agenti e provvigioni'],['fatt','Fatture, DDT, note di credito'],['pn','Prima nota'],['conti','Piano dei conti'],['casse','Casse e banche'],['scad','Scadenzario e pagamenti'],['utenti','Utenti e permessi'],['audit','Audit log'],['backup','Backup'],['conf','Configurazione']]}
 };
 const PRONTE=['dashboard.oggi','commesse.elenco','preventivi.elenco'];
@@ -594,6 +627,381 @@ function apriElenco(tipo,stato){
   sez=tipo; voce='elenco'; render(stato);
 }
 
+
+/* ================= ARTICOLI ================= */
+const GRUPPI={'Zanzariere':['A catena','Plissé','A molla','Fisse'],'Avvolgibili':['PVC','Alluminio','Legno'],
+  'Accessori':['Maniglie','Guide','Meccanica','Reti']};
+
+const LIB=[
+ {id:'COL-ZANZ',nome:'Colori zanzariere',valori:[
+   {v:'Bianco 9010',m:0},{v:'Avorio 1013',m:0},{v:'Marrone 8017',m:8},{v:'Ciliegio naturale',m:15}]},
+ {id:'TIPO-MIS',nome:'Tipo misura',valori:[
+   {v:'Misura finita',m:0},{v:'Misura vano',m:0},{v:'Misura da confermare',m:0}]},
+ {id:'RETE',nome:'Tipo rete',valori:[
+   {v:'Fibra standard',m:0},{v:'Pet screen',m:12},{v:'Antipolline',m:18}]},
+ {id:'COL-AVV',nome:'Colori avvolgibili',valori:[
+   {v:'Bianco',m:0},{v:'Grigio 7035',m:0},{v:'Marrone',m:5}]}
+];
+
+const PRODOTTI=[
+ {cod:'ZC50-L',desc:'Zanzariera a catena 50 laterale',alt:'Zanz. catena 50 lat. — rete fibra',g:'Zanzariere',sg:'A catena',
+  um:'MQ',tipo:'misura',prezzo:95,qmin:1.5,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'(misura1*misura2)/1000000',spec:[{id:'COL-ZANZ',prezzi:{'Marrone 8017':12}},{id:'TIPO-MIS',prezzi:{}},{id:'RETE',prezzi:{}}],kind:'art'},
+ {cod:'ZC50-D',desc:'Zanzariera a catena 50 doppia',alt:'Zanz. catena 50 doppia',g:'Zanzariere',sg:'A catena',
+  um:'MQ',tipo:'misura',prezzo:118,qmin:2,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'(misura1*misura2)/1000000',spec:[{id:'COL-ZANZ',prezzi:{}},{id:'TIPO-MIS',prezzi:{}}],kind:'art'},
+ {cod:'ZP40-V',desc:'Zanzariera plissé 40 verticale',alt:'Zanz. plissé 40 vert.',g:'Zanzariere',sg:'Plissé',
+  um:'MQ',tipo:'misura',prezzo:128,qmin:1.2,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'(misura1*misura2)/1000000',spec:[{id:'COL-ZANZ',prezzi:{}},{id:'RETE',prezzi:{}}],kind:'art'},
+ {cod:'ZM-FIS',desc:'Zanzariera fissa telaio 25',alt:'Zanz. fissa telaio 25',g:'Zanzariere',sg:'Fisse',
+  um:'MQ',tipo:'tabella',prezzo:0,qmin:1,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'',spec:[{id:'COL-ZANZ',prezzi:{}}],kind:'art'},
+ {cod:'AV-PVC14',desc:'Avvolgibile PVC 14×55',alt:'Avvolg. PVC 14x55',g:'Avvolgibili',sg:'PVC',
+  um:'MQ',tipo:'misura',prezzo:62,qmin:1,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'(misura1*misura2)/1000000',spec:[{id:'COL-AVV',prezzi:{}}],kind:'art'},
+ {cod:'AV-ALL',desc:'Avvolgibile alluminio coibentato',alt:'Avvolg. alluminio',g:'Avvolgibili',sg:'Alluminio',
+  um:'MQ',tipo:'misura',prezzo:96,qmin:1,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'(misura1*misura2)/1000000',spec:[{id:'COL-AVV',prezzi:{}}],kind:'art'},
+ {cod:'MAN-MAG',desc:'Kit maniglia magnetica',alt:'Kit maniglia magn.',g:'Accessori',sg:'Maniglie',
+  um:'PZ',tipo:'pezzo',prezzo:18,qmin:0,mis:[{on:false,n:''},{on:false,n:''},{on:false,n:''}],formula:'',spec:[],kind:'acc'},
+ {cod:'FRE-CAT',desc:'Freno catena',alt:'Freno catena',g:'Accessori',sg:'Meccanica',
+  um:'PZ',tipo:'pezzo',prezzo:10.40,qmin:0,mis:[{on:false,n:''},{on:false,n:''},{on:false,n:''}],formula:'',spec:[],kind:'acc'},
+ {cod:'GUI-INF',desc:'Guida inferiore ribassata',alt:'Guida inf. ribassata',g:'Accessori',sg:'Guide',
+  um:'MTL',tipo:'misura',prezzo:6,qmin:0,mis:[{on:true,n:'Lunghezza'},{on:false,n:''},{on:false,n:''}],
+  formula:'misura1/1000',spec:[],kind:'acc'},
+ {cod:'RET-PET',desc:'Rete pet screen al mq',alt:'Rete pet screen',g:'Accessori',sg:'Reti',
+  um:'MQ',tipo:'misura',prezzo:12,qmin:0.5,mis:[{on:true,n:'Larghezza'},{on:true,n:'Altezza'},{on:false,n:''}],
+  formula:'(misura1*misura2)/1000000',spec:[],kind:'acc'}
+];
+
+let C={kind:'art',sort:{c:null,d:1},f:{},cerca:'',sel:null};
+const COLC=[['cod','Codice'],['desc','Descrizione'],['g','Gruppo'],['sg','Sottogruppo'],['um','Unità di misura'],['prezzo','Prezzo listino','num']];
+
+function vistaCatalogo(kind){
+  C={kind,sort:{c:null,d:1},f:{},cerca:'',sel:null};
+  const n=PRODOTTI.filter(p=>p.kind===kind).length;
+  return `
+  <div class="head"><div><h1>${kind==='art'?'Articoli':'Accessori'}</h1>
+  <p class="sub">${n} ${kind==='art'?'articoli':'accessori'} in catalogo</p></div></div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="searchbox"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.3-4.3"/></svg>
+        <input id="ccerca" placeholder="Cerca codice o descrizione…"></div>
+      <select class="filt" id="cg"><option>Tutti i gruppi</option>${Object.keys(GRUPPI).map(g=>`<option>${g}</option>`).join('')}</select>
+      <button class="btn sm" id="cazzera">Azzera filtri</button>
+      <span class="info" style="margin-left:auto;font-size:12px;color:var(--muted)">Doppio click sulla riga per modificare</span>
+    </div>
+    <div class="tabwrap">
+      <table id="ctab">
+        <thead>
+          <tr>${COLC.map((c,i)=>`<th class="sortable ${c[2]==='num'?'r':''}" data-c="${i}">${c[1]}<span class="arw">▲</span></th>`).join('')}</tr>
+          <tr class="filtri">${COLC.map(c=>`<th><input data-f="${c[0]}" placeholder="filtra"></th>`).join('')}</tr>
+        </thead>
+        <tbody id="crighe"></tbody>
+      </table>
+    </div>
+    <div class="footbar">
+      <span class="info" id="cselinfo">Nessuna riga selezionata</span>
+      <span class="info" id="cconta"></span>
+      <div class="r">
+        <button class="btn pri" id="cadd">Aggiungi</button>
+        <button class="btn" id="cmod" disabled>Modifica</button>
+        <button class="btn" id="cdel" disabled>Elimina</button>
+        <button class="btn" id="cstampa">Stampa elenco</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCat(){
+  let d=PRODOTTI.filter(p=>p.kind===C.kind);
+  const g=document.getElementById('cg');
+  d=d.filter(p=>{
+    if(g&&g.selectedIndex>0&&p.g!==g.value) return false;
+    if(C.cerca&&!(p.cod+' '+p.desc+' '+p.alt).toLowerCase().includes(C.cerca)) return false;
+    for(const k in C.f){ if(C.f[k]&&!String(p[k]).toLowerCase().includes(C.f[k])) return false; }
+    return true;
+  });
+  if(C.sort.c!==null){
+    const k=COLC[C.sort.c][0], num=COLC[C.sort.c][2]==='num';
+    d.sort((a,b)=>num?(a[k]-b[k])*C.sort.d:String(a[k]).localeCompare(String(b[k]),'it',{numeric:true})*C.sort.d);
+  }
+  document.getElementById('crighe').innerHTML = d.length? d.map(p=>
+    `<tr data-cod="${p.cod}" class="${C.sel===p.cod?'sel':''}">
+      <td class="mono">${p.cod}</td><td>${p.desc}</td><td>${p.g}</td><td>${p.sg}</td>
+      <td>${p.um}</td><td class="num">${p.tipo==='tabella'?'<span class="tag">a tabella</span>':eur(p.prezzo)}</td></tr>`).join('')
+    : `<tr><td class="vuoto" colspan="6">Nessun elemento con questi filtri</td></tr>`;
+  document.getElementById('cconta').textContent=`${d.length} di ${PRODOTTI.filter(p=>p.kind===C.kind).length}`;
+  document.querySelectorAll('#crighe tr[data-cod]').forEach(tr=>{
+    tr.onclick=()=>{C.sel=tr.dataset.cod;renderCat();};
+    tr.ondblclick=()=>apriScheda(tr.dataset.cod);
+  });
+  const s=!!C.sel;
+  ['cmod','cdel'].forEach(id=>document.getElementById(id).disabled=!s);
+  document.getElementById('cselinfo').innerHTML=s?`Selezionato <b>${C.sel}</b>`:'Nessuna riga selezionata';
+}
+
+function bindCatalogo(){
+  renderCat();
+  document.querySelectorAll('#ctab th.sortable').forEach(th=>th.onclick=()=>{
+    const c=+th.dataset.c;
+    C.sort=(C.sort.c===c)?{c,d:-C.sort.d}:{c,d:1};
+    document.querySelectorAll('#ctab th.sortable').forEach(t=>{t.classList.remove('sorted');t.querySelector('.arw').textContent='▲';});
+    th.classList.add('sorted');th.querySelector('.arw').textContent=C.sort.d===1?'▲':'▼';
+    renderCat();
+  });
+  document.querySelectorAll('#ctab tr.filtri input').forEach(i=>i.oninput=()=>{C.f[i.dataset.f]=i.value.trim().toLowerCase();renderCat();});
+  document.getElementById('ccerca').oninput=e=>{C.cerca=e.target.value.toLowerCase();renderCat();};
+  document.getElementById('cg').onchange=renderCat;
+  document.getElementById('cazzera').onclick=()=>{
+    C.f={};C.cerca='';C.sort={c:null,d:1};
+    document.querySelectorAll('#ctab tr.filtri input').forEach(i=>i.value='');
+    document.getElementById('ccerca').value='';document.getElementById('cg').selectedIndex=0;
+    document.querySelectorAll('#ctab th.sortable').forEach(t=>{t.classList.remove('sorted');t.querySelector('.arw').textContent='▲';});
+    renderCat();
+  };
+  document.getElementById('cmod').onclick=()=>apriScheda(C.sel);
+  document.getElementById('cadd').onclick=()=>apriScheda(null);
+  document.getElementById('cdel').onclick=()=>avviso(`Eliminazione di <b>${C.sel}</b>: il programma chiederà conferma e rifiuterà se l'articolo è usato in documenti esistenti.`);
+  document.getElementById('cstampa').onclick=()=>avviso('Stampa dell\u2019elenco filtrato, con le colonne attualmente visibili.');
+}
+
+/* ---------- scheda prodotto ---------- */
+let P=null;
+function apriScheda(cod){
+  const base=PRODOTTI.find(p=>p.cod===cod);
+  P = base ? JSON.parse(JSON.stringify(base))
+    : {cod:'',desc:'',alt:'',g:'Zanzariere',sg:'A catena',um:'MQ',tipo:'misura',prezzo:0,qmin:0,
+       mis:[{on:false,n:''},{on:false,n:''},{on:false,n:''}],formula:'',spec:[],kind:C.kind,nuovo:true};
+  voce='scheda'; render();
+}
+
+function vistaScheda(){
+  if(!P) return `<div class="soon"><h3>Nessun prodotto aperto</h3><div>Apri un articolo dall'elenco, oppure premi Aggiungi.</div></div>`;
+  return `
+  <div class="head"><div><h1>${P.nuovo?'Nuovo prodotto':P.cod+' — '+P.desc}</h1>
+  <p class="sub">${P.kind==='art'?'Articolo':'Accessorio'} · ${P.g} › ${P.sg}</p></div>
+  <div class="acts"><button class="btn" id="sannulla">Annulla</button><button class="btn pri" id="ssalva">Salva prodotto</button></div></div>
+
+  <div class="cols" style="grid-template-columns:1.25fr 1fr">
+    <div>
+      <div class="card"><h2>Codifica</h2><div class="in form">
+        <div class="form f2">
+          <label class="f"><span>Codice <b>*</b></span><input class="mono" id="p_cod" value="${P.cod}"></label>
+          <label class="f"><span>Unità di misura</span><select id="p_um">${['PZ','MQ','MTL'].map(u=>`<option ${P.um===u?'selected':''}>${u}</option>`).join('')}</select></label>
+        </div>
+        <label class="f"><span>Descrizione <b>*</b></span><input id="p_desc" value="${P.desc}"></label>
+        <label class="f"><span>Descrizione alternativa</span><input id="p_alt" value="${P.alt}"></label>
+        <div class="form f2">
+          <label class="f"><span>Gruppo</span><select id="p_g">${Object.keys(GRUPPI).map(g=>`<option ${P.g===g?'selected':''}>${g}</option>`).join('')}</select></label>
+          <label class="f"><span>Sottogruppo</span><select id="p_sg">${(GRUPPI[P.g]||[]).map(s=>`<option ${P.sg===s?'selected':''}>${s}</option>`).join('')}</select></label>
+        </div>
+      </div></div>
+
+      <div class="card"><h2>Vendita e calcolo della quantità</h2><div class="in form">
+        <label class="f"><span>Tipologia vendita</span><select id="p_tipo">
+          <option value="misura" ${P.tipo==='misura'?'selected':''}>In base alla misura</option>
+          <option value="pezzo" ${P.tipo==='pezzo'?'selected':''}>Prezzo a pezzo</option>
+          <option value="tabella" ${P.tipo==='tabella'?'selected':''}>Prezzo a tabella</option>
+        </select></label>
+        <div id="blocco"></div>
+      </div></div>
+    </div>
+
+    <div>
+      <div class="card"><h2>Immagine <span class="r"><span style="font-size:11.5px;color:var(--muted)">facoltativa</span></span></h2>
+        <div class="in"><div class="imgbox">Nessuna immagine<br><span style="font-size:11px">clicca per sceglierne una</span></div></div>
+      </div>
+      <div class="card"><h2>Note interne</h2><div class="in form">
+        <textarea rows="4" placeholder="Annotazioni tecniche, non stampate sui documenti"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Specifiche del prodotto
+      <span class="r">
+        <select class="filt" id="p_addspec"><option value="">Aggiungi da libreria…</option>
+          ${LIB.map(l=>`<option value="${l.id}">${l.nome}</option>`).join('')}</select>
+      </span>
+    </h2>
+    <div id="tabspec"></div>
+    <div class="in" style="border-top:1px solid var(--line);color:var(--muted);font-size:12px">
+      La maggiorazione generale vale per tutti i prodotti che usano quella libreria. Il prezzo indicato qui vale solo per questo prodotto e ha la precedenza.
+    </div>
+  </div>`;
+}
+
+function bloccoVendita(){
+  const b=document.getElementById('blocco'); if(!b) return;
+  if(P.tipo==='pezzo'){
+    b.innerHTML=`<table style="margin-top:4px"><thead><tr><th>Voce</th><th class="r" style="width:180px">Prezzo di listino</th></tr></thead>
+      <tbody><tr><td>Prezzo unitario a pezzo</td><td class="num"><input class="num" id="p_prezzo" value="${P.prezzo}" style="height:31px"></td></tr></tbody></table>`;
+    document.getElementById('p_prezzo').oninput=e=>{P.prezzo=+e.target.value||0;};
+    return;
+  }
+  if(P.tipo==='tabella'){
+    b.innerHTML=`<div class="prova"><b>Prezzo a tabella</b>
+      <div style="color:var(--muted);font-size:12.5px;margin-top:6px">La struttura della tabella (fasce di larghezza e altezza, oppure fasce di superficie) va definita sull'esempio reale del tuo listino. Mandami la tabella di un prodotto e la costruisco qui.</div></div>`;
+    return;
+  }
+  b.innerHTML=`
+    <div class="form f2" style="margin-bottom:14px">
+      <label class="f"><span>Quantità minima fatturabile</span><input class="num" id="p_qmin" value="${P.qmin}"></label>
+      <label class="f"><span>Prezzo di listino (per ${P.um})</span><input class="num" id="p_prezzo" value="${P.prezzo}"></label>
+    </div>
+    <div style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Misure da abilitare</div>
+    ${P.mis.map((m,i)=>`<div class="misrow ${m.on?'':'off'}" data-i="${i}">
+      <input type="checkbox" ${m.on?'checked':''} data-chk="${i}">
+      <span class="lab">Misura ${i+1}</span>
+      <input type="text" data-nome="${i}" value="${m.n}" placeholder="nome mostrato in commessa (es. Larghezza)" ${m.on?'':'disabled'}>
+    </div>`).join('')}
+    <label class="f" style="margin-top:14px"><span>Formula per il calcolo della quantità</span>
+      <input class="mono" id="p_formula" value="${P.formula}" placeholder="es. (misura1*misura2)/1000000"></label>
+    <div class="prova" id="provaf"></div>`;
+
+  document.querySelectorAll('[data-chk]').forEach(c=>c.onchange=e=>{
+    const i=+e.target.dataset.chk; P.mis[i].on=e.target.checked; bloccoVendita();
+  });
+  document.querySelectorAll('[data-nome]').forEach(n=>n.oninput=e=>{P.mis[+e.target.dataset.nome].n=e.target.value;});
+  document.getElementById('p_qmin').oninput=e=>{P.qmin=+e.target.value||0;provaFormula();};
+  document.getElementById('p_prezzo').oninput=e=>{P.prezzo=+e.target.value||0;provaFormula();};
+  document.getElementById('p_formula').oninput=e=>{P.formula=e.target.value;provaFormula();};
+  provaFormula();
+}
+
+function provaFormula(){
+  const box=document.getElementById('provaf'); if(!box) return;
+  const campione=[1000,1200,300];
+  const attive=P.mis.map((m,i)=>m.on?{i,n:m.n||('Misura '+(i+1)),v:campione[i]}:null).filter(Boolean);
+  let q=null,errore=null;
+  try{
+    let f=P.formula||'';
+    if(!f.trim()) errore='Formula non ancora inserita';
+    else{
+      const expr=f.replace(/misura([123])/g,(_,d)=>String(campione[+d-1]));
+      if(/[^0-9+\-*/(). ]/.test(expr)) throw new Error('caratteri non ammessi');
+      q=Function('"use strict";return ('+expr+')')();
+      if(!isFinite(q)) throw new Error('risultato non valido');
+    }
+  }catch(e){ errore='Formula non valida: '+e.message; }
+  const qf=q===null?null:Math.max(q,P.qmin||0);
+  box.innerHTML=`<div style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600">Prova con misure di esempio</div>
+    <div class="rr"><span>${attive.length?attive.map(a=>`${a.n} ${a.v} mm`).join(' · '):'nessuna misura abilitata'}</span></div>
+    ${errore?`<div class="rr err">${errore}</div>`:`
+    <div class="rr"><span>Quantità calcolata</span><b>${q.toLocaleString('it-IT',{maximumFractionDigits:4})} ${P.um.toLowerCase()}</b></div>
+    <div class="rr"><span>Quantità fatturata (minimo ${P.qmin||0})</span><b ${qf>q?'style="color:var(--alert)"':''}>${qf.toLocaleString('it-IT',{maximumFractionDigits:4})} ${P.um.toLowerCase()}</b></div>
+    <div class="rr"><span>Importo con listino ${eur(P.prezzo)}</span><b>${eur(qf*P.prezzo)}</b></div>`}`;
+}
+
+function tabellaSpec(){
+  const t=document.getElementById('tabspec'); if(!t) return;
+  if(!P.spec.length){ t.innerHTML='<div class="vuoto">Nessuna specifica associata — aggiungine una dalla libreria</div>'; return; }
+  t.innerHTML=`<table><thead><tr><th style="width:22%">Specifica</th><th style="width:28%">Voce</th>
+    <th class="r" style="width:16%">Maggiorazione generale</th><th class="r" style="width:18%">Prezzo per questo prodotto</th>
+    <th style="width:12%">Applicato</th><th style="width:4%"></th></tr></thead><tbody>
+    ${P.spec.map((s,si)=>{
+      const lib=LIB.find(l=>l.id===s.id);
+      return lib.valori.map((v,vi)=>{
+        const ov=s.prezzi[v.v];
+        return `<tr>
+          ${vi===0?`<td rowspan="${lib.valori.length}" style="vertical-align:top"><b>${lib.nome}</b><div style="font-size:11px;color:var(--faint)" class="mono">${lib.id}</div></td>`:''}
+          <td>${v.v}</td>
+          <td class="num">${v.m?'+ '+eur(v.m):'—'}</td>
+          <td class="num"><input class="num" data-ov="${si}|${v.v}" value="${ov!==undefined?ov:''}" placeholder="—" style="height:28px;width:100px"></td>
+          <td>${ov!==undefined?`<span class="sovr">${eur(ov)}</span>`:(v.m?`<span class="tag">generale</span>`:'<span class="tag">nessuno</span>')}</td>
+          ${vi===0?`<td rowspan="${lib.valori.length}" style="vertical-align:top"><button class="del" data-rm="${si}" style="border:0;background:none;color:var(--alert);cursor:pointer">✕</button></td>`:''}
+        </tr>`;
+      }).join('');
+    }).join('')}</tbody></table>`;
+  document.querySelectorAll('[data-ov]').forEach(i=>i.oninput=e=>{
+    const [si,v]=e.target.dataset.ov.split('|');
+    if(e.target.value==='') delete P.spec[+si].prezzi[v]; else P.spec[+si].prezzi[v]=+e.target.value;
+    tabellaSpec();
+  });
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=e=>{P.spec.splice(+e.target.dataset.rm,1);tabellaSpec();});
+}
+
+function bindScheda(){
+  if(!P) return;
+  bloccoVendita(); tabellaSpec();
+  const set=(id,k)=>{const e=document.getElementById(id); if(e) e.oninput=ev=>P[k]=ev.target.value;};
+  set('p_cod','cod'); set('p_desc','desc'); set('p_alt','alt');
+  document.getElementById('p_um').onchange=e=>{P.um=e.target.value;bloccoVendita();};
+  document.getElementById('p_tipo').onchange=e=>{P.tipo=e.target.value;bloccoVendita();};
+  document.getElementById('p_g').onchange=e=>{
+    P.g=e.target.value; P.sg=GRUPPI[P.g][0];
+    document.getElementById('p_sg').innerHTML=GRUPPI[P.g].map(s=>`<option>${s}</option>`).join('');
+  };
+  document.getElementById('p_sg').onchange=e=>P.sg=e.target.value;
+  document.getElementById('p_addspec').onchange=e=>{
+    if(!e.target.value) return;
+    if(!P.spec.some(s=>s.id===e.target.value)) P.spec.push({id:e.target.value,prezzi:{}});
+    e.target.selectedIndex=0; tabellaSpec();
+  };
+  document.getElementById('sannulla').onclick=()=>{voce=P.kind==='art'?'articoli':'accessori';P=null;render();};
+  document.getElementById('ssalva').onclick=()=>{
+    const i=PRODOTTI.findIndex(p=>p.cod===P.cod);
+    delete P.nuovo;
+    if(i>=0) PRODOTTI[i]=P; else PRODOTTI.push(P);
+    voce=P.kind==='art'?'articoli':'accessori'; C.sel=P.cod; P=null; render();
+    avviso('Prodotto salvato.');
+  };
+}
+
+/* ---------- librerie di specifiche ---------- */
+let libSel=LIB[0].id;
+function vistaSpecifiche(){
+  const l=LIB.find(x=>x.id===libSel);
+  return `
+  <div class="head"><div><h1>Specifiche</h1>
+  <p class="sub">Librerie riutilizzabili: si creano una volta e si associano a più prodotti</p></div>
+  <div class="acts"><button class="btn pri" id="lnew">Nuova libreria</button></div></div>
+  <div class="card"><div class="libcol">
+    <div class="liblist">
+      ${LIB.map(x=>`<div class="libitem ${x.id===libSel?'on':''}" data-l="${x.id}">${x.nome}<b>${x.valori.length}</b></div>`).join('')}
+    </div>
+    <div>
+      <div class="toolbar"><b style="font-size:14px">${l.nome}</b>
+        <span class="mono" style="color:var(--faint);font-size:12px">${l.id}</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--muted)">Usata da ${PRODOTTI.filter(p=>p.spec.some(s=>s.id===l.id)).length} prodotti</span>
+      </div>
+      <table><thead><tr><th>Voce</th><th class="r" style="width:200px">Maggiorazione generale</th><th style="width:60px"></th></tr></thead>
+      <tbody>${l.valori.map((v,i)=>`<tr><td>${v.v}</td>
+        <td class="num"><input class="num" data-m="${i}" value="${v.m||''}" placeholder="—" style="height:28px;width:110px"></td>
+        <td><button style="border:0;background:none;color:var(--alert);cursor:pointer" data-dv="${i}">✕</button></td></tr>`).join('')}
+        <tr><td><input id="nv" placeholder="Nuova voce…" style="height:29px"></td>
+        <td class="num"><input class="num" id="nm" placeholder="magg." style="height:29px;width:110px"></td>
+        <td><button class="btn sm" id="addv">+</button></td></tr>
+      </tbody></table>
+      <div class="in" style="border-top:1px solid var(--line);color:var(--muted);font-size:12px">
+        Modificando qui la maggiorazione cambia per tutti i prodotti che usano questa libreria, tranne quelli con un prezzo specifico impostato nella scheda prodotto.
+      </div>
+    </div>
+  </div></div>`;
+}
+function bindSpec(){
+  document.querySelectorAll('.libitem').forEach(d=>d.onclick=()=>{libSel=d.dataset.l;render();});
+  const l=LIB.find(x=>x.id===libSel);
+  document.querySelectorAll('[data-m]').forEach(i=>i.oninput=e=>{l.valori[+e.target.dataset.m].m=+e.target.value||0;});
+  document.querySelectorAll('[data-dv]').forEach(b=>b.onclick=e=>{l.valori.splice(+e.target.dataset.dv,1);render();});
+  document.getElementById('addv').onclick=()=>{
+    const v=document.getElementById('nv').value.trim(); if(!v) return;
+    l.valori.push({v,m:+document.getElementById('nm').value||0}); render();
+  };
+  document.getElementById('lnew').onclick=()=>avviso('Creazione di una nuova libreria di specifiche: nome, codice e voci.');
+}
+
+/* ---------- gruppi ---------- */
+function vistaGruppi(){
+  return `<div class="head"><div><h1>Gruppi e sottogruppi</h1><p class="sub">Struttura del catalogo</p></div>
+  <div class="acts"><button class="btn">Nuovo sottogruppo</button><button class="btn pri">Nuovo gruppo</button></div></div>
+  <div class="cols">${Object.entries(GRUPPI).map(([g,ss])=>`
+    <div class="card"><h2>${g} <span class="r"><span class="tag">${PRODOTTI.filter(p=>p.g===g).length} prodotti</span></span></h2>
+    <table><tbody>${ss.map(s=>`<tr><td>${s}</td><td class="num">${PRODOTTI.filter(p=>p.sg===s).length}</td></tr>`).join('')}</tbody></table></div>`).join('')}
+  </div>`;
+}
+
 function vistaSoon(sez,voce){
   const nome=SEZIONI[sez].voci.find(v=>v[0]===voce)[1];
   const altre=SEZIONI[sez].voci.filter(v=>v[0]!==voce);
@@ -616,6 +1024,11 @@ function render(quick){
   if(key==='dashboard.oggi'){ view.innerHTML=vistaDashboard(); rendiRichiudibili(); }
   else if(key==='commesse.elenco'){ view.innerHTML=vistaElenco('commesse',quick); bindElenco(); }
   else if(key==='preventivi.elenco'){ view.innerHTML=vistaElenco('preventivi',quick); bindElenco(); }
+  else if(key==='articoli.articoli'){ view.innerHTML=vistaCatalogo('art'); bindCatalogo(); }
+  else if(key==='articoli.accessori'){ view.innerHTML=vistaCatalogo('acc'); bindCatalogo(); }
+  else if(key==='articoli.scheda'){ view.innerHTML=vistaScheda(); bindScheda(); }
+  else if(key==='articoli.spec'){ view.innerHTML=vistaSpecifiche(); bindSpec(); }
+  else if(key==='articoli.gruppi'){ view.innerHTML=vistaGruppi(); }
   else view.innerHTML=vistaSoon(sez,voce);
   view.scrollTop=0;
 }
