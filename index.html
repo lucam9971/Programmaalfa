@@ -124,6 +124,35 @@ td .mono,td.mono{color:var(--ink)}
 .tbox::-webkit-scrollbar{width:9px}
 .tbox table{border-collapse:separate}
 
+/* ---- ordinamento e filtri di colonna ---- */
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--accent);background:#EFF3F8}
+th .arw{opacity:.28;margin-left:5px;font-size:9px}
+th.sorted{color:var(--accent);background:var(--accent-soft)}
+th.sorted .arw{opacity:1}
+tr.filtri th{padding:5px 8px;background:var(--paper);position:sticky;top:33px;z-index:1;border-bottom:1px solid var(--line)}
+tr.filtri input{width:100%;font:inherit;font-size:11.5px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--sunk);color:var(--ink)}
+tr.filtri input:focus{outline:none;border-color:var(--accent-2);background:var(--paper)}
+tbody tr.sel{box-shadow:inset 0 0 0 2px var(--accent-2);background:var(--accent-soft)}
+.vuoto{text-align:center;color:var(--faint);padding:26px}
+
+/* ---- barra pulsanti fissa in fondo all'elenco ---- */
+.footbar{display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px solid var(--line);
+  background:var(--paper);position:sticky;bottom:0;box-shadow:0 -3px 10px -6px rgba(21,27,35,.2)}
+.footbar .info{font-size:12.5px;color:var(--muted)}
+.footbar .info b{color:var(--ink);font-family:'Roboto Mono',monospace}
+.footbar .r{margin-left:auto;display:flex;gap:8px}
+.btn[disabled]{opacity:.42;cursor:default;box-shadow:none}
+.tabwrap{max-height:560px;overflow:auto}
+
+/* ---- schede richiudibili ---- */
+.coll{border:0;background:none;cursor:pointer;color:var(--faint);padding:3px;border-radius:6px;display:grid;place-items:center;line-height:0}
+.coll:hover{background:var(--sunk);color:var(--ink)}
+.coll svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.1;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+.card.chiusa .coll svg{transform:rotate(-90deg)}
+.card.chiusa .tbox,.card.chiusa .in,.card.chiusa>table{display:none}
+.card.chiusa>h2{border-bottom:0}
+
 /* ---- colore riga per stato ---- */
 tr.st{position:relative}
 tr.st td:first-child{box-shadow:inset 3px 0 0 var(--stc)}
@@ -229,8 +258,8 @@ fitZoom();
 /* ---------------- struttura ---------------- */
 const SEZIONI={
   dashboard:{voci:[['oggi','Oggi']]},
-  commesse:{voci:[['elenco','Elenco commesse'],['dett','Dettaglio commessa'],['taglio','Nota taglio'],['etich','Etichette produzione'],['imp','Impostazioni commessa']]},
-  preventivi:{voci:[['elenco','Elenco preventivi'],['dett','Dettaglio preventivo'],['trasf','Trasformazione in commessa']]},
+  commesse:{voci:[['elenco','Elenco commesse'],['apri','Apri'],['imp','Impostazioni commessa']]},
+  preventivi:{voci:[['elenco','Elenco preventivi'],['apri','Apri']]},
   magazzino:{voci:[['giac','Giacenze'],['mov','Movimenti'],['carico','Carico da fornitore'],['inv','Rettifiche e inventario'],['sotto','Sottoscorta']]},
   articoli:{voci:[['elenco','Elenco articoli'],['scheda','Scheda articolo'],['gruppi','Gruppi e sottogruppi'],['spec','Specifiche'],['acc','Accessori'],['listini','Listini e prezzi']]},
   amministrazione:{voci:[['clienti','Clienti'],['forn','Fornitori'],['agenti','Agenti e provvigioni'],['fatt','Fatture, DDT, note di credito'],['pn','Prima nota'],['conti','Piano dei conti'],['casse','Casse e banche'],['scad','Scadenzario e pagamenti'],['utenti','Utenti e permessi'],['audit','Audit log'],['backup','Backup'],['conf','Configurazione']]}
@@ -301,7 +330,7 @@ function vistaDashboard(){
     <div>
       <div class="card">
         <h2>Commesse in lavorazione <span class="tag al">3 in ritardo</span>
-        <span class="r"><span style="font-size:11.5px;color:var(--muted)">47 pezzi totali</span><button class="btn sm">Apri elenco</button></span></h2>
+        <span class="r"><span style="font-size:11.5px;color:var(--muted)">47 pezzi totali</span><button class="btn sm" onclick="apriElenco('commesse','In lavorazione')">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Commessa</th><th>Cliente</th><th class="r">Pezzi</th><th class="r">Fatti</th><th>Consegna</th><th>Ritardo</th></tr></thead>
           <tbody>
@@ -316,7 +345,7 @@ function vistaDashboard(){
       </div>
 
       <div class="card">
-        <h2>Consegne di oggi <span class="r"><button class="btn sm">Stampa giro</button><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Consegne di oggi <span class="r"><button class="btn sm">Stampa giro</button><button class="btn sm" onclick="apriElenco('commesse')">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Commessa</th><th>Cliente</th><th>Indirizzo</th><th class="r">Pezzi</th><th>Tipo</th></tr></thead>
           <tbody>
@@ -328,7 +357,7 @@ function vistaDashboard(){
       </div>
 
       <div class="card">
-        <h2>Da consegnare nei prossimi 14 giorni <span class="r"><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Da consegnare nei prossimi 14 giorni <span class="r"><button class="btn sm" onclick="apriElenco('commesse')">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Commessa</th><th>Cliente</th><th>Consegna</th><th>Stato</th><th class="r">Totale</th></tr></thead>
           <tbody>
@@ -344,7 +373,7 @@ function vistaDashboard(){
 
     <div>
       <div class="card">
-        <h2>Da rilevare misure <span class="tag wa">7</span><span class="r"><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Da rilevare misure <span class="tag wa">7</span><span class="r"><button class="btn sm" onclick="apriElenco('commesse','Da rilevare misure')">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Commessa</th><th>Cliente</th><th>Attesa</th><th>Tecnico</th></tr></thead>
           <tbody>
@@ -358,7 +387,7 @@ function vistaDashboard(){
       </div>
 
       <div class="card">
-        <h2>Montaggi <span class="tag ac">4</span><span class="r"><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Montaggi <span class="tag ac">4</span><span class="r"><button class="btn sm" onclick="apriElenco('commesse')">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Commessa</th><th>Cliente</th><th>Data</th><th class="r">Pezzi</th></tr></thead>
           <tbody>
@@ -371,7 +400,7 @@ function vistaDashboard(){
       </div>
 
       <div class="card">
-        <h2>Da spedire <span class="tag wa">5</span><span class="r"><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Da spedire <span class="tag wa">5</span><span class="r"><button class="btn sm" onclick="apriElenco('commesse','Da spedire')">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <tbody>
             <tr class="st st-spedire"><td class="mono">104/2026</td><td>Serramenti Val di Non</td><td class="num">12 pz</td></tr>
@@ -384,7 +413,7 @@ function vistaDashboard(){
       </div>
 
       <div class="card">
-        <h2>Sottoscorta <span class="tag al">3</span><span class="r"><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Sottoscorta <span class="tag al">3</span><span class="r"><button class="btn sm" onclick="sez='magazzino';voce='sotto';render()">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Componente</th><th class="r">Giacenza</th><th class="r">Minimo</th></tr></thead>
           <tbody>
@@ -396,7 +425,7 @@ function vistaDashboard(){
       </div>
 
       <div class="card">
-        <h2>Da riordinare <span class="r"><button class="btn sm">Crea ordine fornitore</button><button class="btn sm">Apri elenco</button></span></h2>
+        <h2>Da riordinare <span class="r"><button class="btn sm">Crea ordine fornitore</button><button class="btn sm" onclick="sez='magazzino';voce='giac';render()">Apri elenco</button></span></h2>
         <div class="tbox"><table>
           <thead><tr><th>Componente</th><th class="r">Da ordinare</th><th>Fornitore</th></tr></thead>
           <tbody>
@@ -413,50 +442,156 @@ function vistaDashboard(){
   </div>`;
 }
 
-function vistaElenco(tipo){
-  const dati = tipo==='commesse'?DOCS:PREV;
-  const stati = [...new Set(dati.map(d=>d.stato))];
+const COLS={
+ commesse:[['n','Numero'],['cli','Cliente'],['cant','Cantiere'],['data','Data'],['cons','Consegna'],['stato','Stato'],['ag','Agente'],['tot','Totale','num']],
+ preventivi:[['n','Numero'],['cli','Cliente'],['cant','Cantiere'],['data','Data'],['stato','Stato'],['ag','Agente'],['tot','Totale','num']]
+};
+let L={tipo:'commesse',sort:{c:null,d:1},f:{},quick:'Tutti',sel:null,cerca:''};
+
+function vistaElenco(tipo,quick){
+  L={tipo,sort:{c:null,d:1},f:{},quick:quick||'Tutti',sel:null,cerca:''};
+  const dati=tipo==='commesse'?DOCS:PREV;
+  const stati=[...new Set(dati.map(d=>d.stato))];
+  const cols=COLS[tipo];
   return `
   <div class="head"><div><h1>${tipo==='commesse'?'Elenco commesse':'Elenco preventivi'}</h1>
   <p class="sub">${dati.length} documenti · anno 2026</p></div>
   <div class="acts"><button class="btn">Colonne</button><button class="btn">Esporta</button>
-  <button class="btn pri">Nuovo ${tipo==='commesse'?'commessa':'preventivo'}</button></div></div>
+  <button class="btn pri">${tipo==='commesse'?'Nuova commessa':'Nuovo preventivo'}</button></div></div>
 
   <div class="card">
     <div class="toolbar">
       <div class="searchbox"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.3-4.3"/></svg>
-        <input placeholder="Cerca cliente, numero, cantiere…" oninput="filtra(this.value)"></div>
-      <select class="filt"><option>Tutti gli agenti</option><option>Bianchi</option><option>Neri</option></select>
+        <input id="cerca" placeholder="Cerca in tutte le colonne…"></div>
+      <select class="filt" id="fag"><option>Tutti gli agenti</option>${[...new Set(dati.map(d=>d.ag))].filter(a=>a!=='—').map(a=>`<option>${a}</option>`).join('')}</select>
       <select class="filt"><option>Anno corrente</option><option>Ultimi 30 giorni</option><option>Ultimi 60 giorni</option><option>Tutto</option></select>
-      <span style="margin-left:auto"></span>
-      <div class="legenda">${LEGENDA.map(([n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>
+      <button class="btn sm" id="azzera">Azzera filtri</button>
+      <div class="legenda" style="margin-left:auto">${LEGENDA.map(([n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>
     </div>
     <div class="listlayout">
-      <div>
-        <table>
-          <thead><tr><th>Numero</th><th>Cliente</th><th>Cantiere</th><th>Data</th>
-          <th>${tipo==='commesse'?'Consegna':'Validità'}</th><th>Stato</th><th>Agente</th><th class="r">Totale</th></tr></thead>
-          <tbody id="righe">
-            ${dati.map(d=>`<tr class="${cls(d.stato)}"><td class="mono">${d.n}</td><td>${d.cli}</td><td>${d.cant}</td>
-            <td class="mono">${d.data}</td><td class="mono">${d.cons}</td><td>${tagStato(d.stato)}</td>
-            <td>${d.ag}</td><td class="num">${eur(d.tot)}</td></tr>`).join('')}
-          </tbody>
+      <div style="min-width:0">
+        <div class="tabwrap">
+        <table id="tab">
+          <thead>
+            <tr>${cols.map((c,i)=>`<th class="sortable ${c[2]==='num'?'r':''}" data-c="${i}">${c[1]}<span class="arw">▲</span></th>`).join('')}</tr>
+            <tr class="filtri">${cols.map((c,i)=>`<th><input data-f="${c[0]}" placeholder="filtra"></th>`).join('')}</tr>
+          </thead>
+          <tbody id="righe"></tbody>
         </table>
+        </div>
+        <div class="footbar">
+          <span class="info" id="selinfo">Nessuna riga selezionata</span>
+          <span class="info" id="conta"></span>
+          <div class="r">
+            <button class="btn pri" id="bapri" disabled>Apri</button>
+            ${tipo==='preventivi'?'<button class="btn" id="btrasf" disabled>Trasforma in commessa</button>':''}
+            <button class="btn" id="bstampa" disabled>Stampa</button>
+          </div>
+        </div>
       </div>
       <div class="side">
-        <h3>Stato</h3>
-        <div class="lnk on">Tutti <b>${dati.length}</b></div>
-        ${stati.map(s=>`<div class="lnk">${s} <b>${dati.filter(d=>d.stato===s).length}</b></div>`).join('')}
+        <h3>Filtri rapidi — stato</h3>
+        <div class="lnk quick on" data-q="Tutti">Tutti <b>${dati.length}</b></div>
+        ${stati.map(s=>`<div class="lnk quick" data-q="${s}">${s} <b>${dati.filter(d=>d.stato===s).length}</b></div>`).join('')}
         <div class="grp"><h3>Periodo</h3>
           <div class="lnk on">Anno corrente</div><div class="lnk">Anno scorso</div>
           <div class="lnk">Ultimi 30 gg</div><div class="lnk">Ultimi 60 gg</div>
         </div>
-        <div class="grp"><h3>Totale filtrato</h3>
-          <div style="font-family:'Roboto Mono',monospace;font-size:19px;font-weight:600">€ ${eur(dati.reduce((a,b)=>a+b.tot,0))}</div>
-        </div>
       </div>
     </div>
   </div>`;
+}
+
+function datiFiltrati(){
+  const dati=(L.tipo==='commesse'?DOCS:PREV).slice();
+  const ag=document.getElementById('fag');
+  return dati.filter(d=>{
+    if(L.quick!=='Tutti' && d.stato!==L.quick) return false;
+    if(ag && ag.selectedIndex>0 && d.ag!==ag.value) return false;
+    if(L.cerca && !Object.values(d).join(' ').toLowerCase().includes(L.cerca)) return false;
+    for(const k in L.f){ if(L.f[k] && !String(d[k]).toLowerCase().includes(L.f[k])) return false; }
+    return true;
+  });
+}
+
+function renderRighe(){
+  const cols=COLS[L.tipo];
+  let dati=datiFiltrati();
+  if(L.sort.c!==null){
+    const k=cols[L.sort.c][0], numerico=cols[L.sort.c][2]==='num';
+    dati.sort((a,b)=>{
+      let x=a[k],y=b[k];
+      if(numerico) return (x-y)*L.sort.d;
+      return String(x).localeCompare(String(y),'it',{numeric:true})*L.sort.d;
+    });
+  }
+  document.getElementById('righe').innerHTML = dati.length ? dati.map(d=>
+    `<tr class="${cls(d.stato)} ${L.sel===d.n?'sel':''}" data-n="${d.n}">${cols.map(c=>{
+      if(c[0]==='stato') return `<td>${tagStato(d.stato)}</td>`;
+      if(c[2]==='num')   return `<td class="num">${eur(d.tot)}</td>`;
+      if(c[0]==='n'||c[0]==='data'||c[0]==='cons') return `<td class="mono">${d[c[0]]}</td>`;
+      return `<td>${d[c[0]]}</td>`;
+    }).join('')}</tr>`).join('')
+    : `<tr><td class="vuoto" colspan="${cols.length}">Nessun documento con questi filtri</td></tr>`;
+
+  document.getElementById('conta').textContent=`${dati.length} di ${(L.tipo==='commesse'?DOCS:PREV).length} documenti`;
+  document.querySelectorAll('#righe tr[data-n]').forEach(tr=>{
+    tr.onclick=()=>{L.sel=tr.dataset.n;renderRighe();};
+    tr.ondblclick=()=>apriDoc(tr.dataset.n);
+  });
+  const sel=L.sel && dati.some(d=>d.n===L.sel);
+  document.getElementById('selinfo').innerHTML = sel?`Selezionata <b>${L.sel}</b>`:'Nessuna riga selezionata';
+  ['bapri','btrasf','bstampa'].forEach(id=>{const b=document.getElementById(id); if(b) b.disabled=!sel;});
+}
+
+function apriDoc(n){
+  L.sel=n; voce='apri'; render();
+  setTimeout(()=>{
+    const v=document.getElementById('view');
+    v.insertAdjacentHTML('afterbegin',
+      `<div style="background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:12px;padding:13px 17px;margin-bottom:16px">
+       Apertura documento <b class="mono">${n}</b> — la schermata di dettaglio è nel prototipo separato, la integro nel blocco successivo.</div>`);
+  },0);
+}
+
+function bindElenco(){
+  renderRighe();
+  document.querySelectorAll('#tab th.sortable').forEach(th=>th.onclick=()=>{
+    const c=+th.dataset.c;
+    L.sort = (L.sort.c===c) ? {c,d:-L.sort.d} : {c,d:1};
+    document.querySelectorAll('#tab th.sortable').forEach(t=>{t.classList.remove('sorted');t.querySelector('.arw').textContent='▲';});
+    th.classList.add('sorted'); th.querySelector('.arw').textContent=L.sort.d===1?'▲':'▼';
+    renderRighe();
+  });
+  document.querySelectorAll('tr.filtri input').forEach(i=>i.oninput=()=>{L.f[i.dataset.f]=i.value.trim().toLowerCase();renderRighe();});
+  document.getElementById('cerca').oninput=e=>{L.cerca=e.target.value.toLowerCase();renderRighe();};
+  document.getElementById('fag').onchange=renderRighe;
+  document.querySelectorAll('.lnk.quick').forEach(l=>l.onclick=()=>{
+    document.querySelectorAll('.lnk.quick').forEach(x=>x.classList.remove('on'));
+    l.classList.add('on'); L.quick=l.dataset.q; renderRighe();
+  });
+  document.getElementById('azzera').onclick=()=>{
+    L.f={};L.cerca='';L.quick='Tutti';L.sort={c:null,d:1};
+    document.querySelectorAll('tr.filtri input').forEach(i=>i.value='');
+    document.getElementById('cerca').value='';document.getElementById('fag').selectedIndex=0;
+    document.querySelectorAll('.lnk.quick').forEach((x,i)=>x.classList.toggle('on',i===0));
+    document.querySelectorAll('#tab th.sortable').forEach(t=>{t.classList.remove('sorted');t.querySelector('.arw').textContent='▲';});
+    renderRighe();
+  };
+  document.getElementById('bapri').onclick=()=>apriDoc(L.sel);
+  const bt=document.getElementById('btrasf');
+  if(bt) bt.onclick=()=>avviso(`Il preventivo ${L.sel} verrà trasformato in commessa, con l'origine riportata sul documento.`);
+  document.getElementById('bstampa').onclick=()=>avviso(`Stampa del documento ${L.sel}: preventivo/commessa, nota taglio, etichette di produzione.`);
+}
+
+function avviso(t){
+  const v=document.getElementById('view');
+  const old=document.getElementById('avv'); if(old) old.remove();
+  v.insertAdjacentHTML('afterbegin',`<div id="avv" style="background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:12px;padding:13px 17px;margin-bottom:16px">${t}</div>`);
+}
+
+function apriElenco(tipo,stato){
+  sez=tipo; voce='elenco'; render(stato);
 }
 
 function vistaSoon(sez,voce){
@@ -470,7 +605,7 @@ function vistaSoon(sez,voce){
 
 /* ---------------- navigazione ---------------- */
 let sez='dashboard', voce='oggi';
-function render(){
+function render(quick){
   document.querySelectorAll('#mainnav .item').forEach(b=>b.classList.toggle('on',b.dataset.s===sez));
   document.getElementById('subnav').innerHTML=SEZIONI[sez].voci
     .map(([k,n])=>`<button data-v="${k}" class="${k===voce?'on':''}">${n}</button>`).join('');
@@ -478,19 +613,26 @@ function render(){
 
   const key=sez+'.'+voce;
   const view=document.getElementById('view');
-  if(key==='dashboard.oggi') view.innerHTML=vistaDashboard();
-  else if(key==='commesse.elenco') view.innerHTML=vistaElenco('commesse');
-  else if(key==='preventivi.elenco') view.innerHTML=vistaElenco('preventivi');
+  if(key==='dashboard.oggi'){ view.innerHTML=vistaDashboard(); rendiRichiudibili(); }
+  else if(key==='commesse.elenco'){ view.innerHTML=vistaElenco('commesse',quick); bindElenco(); }
+  else if(key==='preventivi.elenco'){ view.innerHTML=vistaElenco('preventivi',quick); bindElenco(); }
   else view.innerHTML=vistaSoon(sez,voce);
   view.scrollTop=0;
 }
 document.querySelectorAll('#mainnav .item').forEach(b=>b.onclick=()=>{
   sez=b.dataset.s; voce=SEZIONI[sez].voci[0][0]; render();
 });
-function filtra(t){
-  t=t.toLowerCase();
-  document.querySelectorAll('#righe tr').forEach(r=>{
-    r.style.display=r.textContent.toLowerCase().includes(t)?'':'none';
+
+/* schede della dashboard richiudibili */
+function rendiRichiudibili(){
+  document.querySelectorAll('#view .card > h2').forEach(h=>{
+    const b=document.createElement('button');
+    b.className='coll'; b.title='Riduci o espandi';
+    b.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+    b.onclick=e=>{e.stopPropagation();h.parentElement.classList.toggle('chiusa');};
+    let r=h.querySelector('.r');
+    if(!r){r=document.createElement('span');r.className='r';h.appendChild(r);}
+    r.appendChild(b);
   });
 }
 render();
